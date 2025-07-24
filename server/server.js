@@ -6,6 +6,11 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+<<<<<<< HEAD
+=======
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+>>>>>>> 9bf2d9c (week5-asignment)
 
 // Load environment variables
 dotenv.config();
@@ -21,6 +26,22 @@ const io = new Server(server, {
   },
 });
 
+<<<<<<< HEAD
+=======
+// MongoDB connection
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/chatapp';
+mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('MongoDB connected'))
+  .catch((err) => console.error('MongoDB connection error:', err));
+
+// User schema and model
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+});
+const User = mongoose.model('User', userSchema);
+
+>>>>>>> 9bf2d9c (week5-asignment)
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -31,6 +52,47 @@ const users = {};
 const messages = [];
 const typingUsers = {};
 
+<<<<<<< HEAD
+=======
+// Registration endpoint (MongoDB)
+app.post('/api/register', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required.' });
+  }
+  try {
+    const existing = await User.findOne({ username });
+    if (existing) {
+      return res.status(409).json({ error: 'Username already exists.' });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({ username, password: hashedPassword });
+    await user.save();
+    res.json({ success: true, message: 'Registration successful.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Login endpoint (MongoDB)
+app.post('/api/login', async (req, res) => {
+  const { username, password } = req.body;
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Invalid username or password.' });
+    }
+    res.json({ success: true, message: 'Login successful.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+>>>>>>> 9bf2d9c (week5-asignment)
 // Socket.io connection handler
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
@@ -80,19 +142,48 @@ io.on('connection', (socket) => {
 
   // Handle private messages
   socket.on('private_message', ({ to, message }) => {
+<<<<<<< HEAD
+=======
+    const receiverUser = users[to];
+>>>>>>> 9bf2d9c (week5-asignment)
     const messageData = {
       id: Date.now(),
       sender: users[socket.id]?.username || 'Anonymous',
       senderId: socket.id,
+<<<<<<< HEAD
       message,
       timestamp: new Date().toISOString(),
       isPrivate: true,
     };
     
+=======
+      receiver: receiverUser?.username || '',
+      message,
+      timestamp: new Date().toISOString(),
+      isPrivate: true,
+      reactions: {},
+      read: false,
+    };
+>>>>>>> 9bf2d9c (week5-asignment)
     socket.to(to).emit('private_message', messageData);
     socket.emit('private_message', messageData);
   });
 
+<<<<<<< HEAD
+=======
+  // Handle message reactions
+  socket.on('react_message', ({ msgId, emoji, user }) => {
+    // Broadcast to all clients (could optimize for relevant users only)
+    io.emit('react_message', { msgId, emoji, user });
+  });
+
+  // Handle read receipts
+  socket.on('read_messages', ({ msgIds, user }) => {
+    // Broadcast to all clients (could optimize for relevant users only)
+    io.emit('read_messages', { msgIds, user });
+  });
+
+>>>>>>> 9bf2d9c (week5-asignment)
   // Handle disconnection
   socket.on('disconnect', () => {
     if (users[socket.id]) {
